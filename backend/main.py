@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import chat_routes
+from app.routes import chat_routes, model_routes
 
-app = FastAPI(title="LLM Chat API")
+app = FastAPI()
 
-# Configure CORS
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, replace with specific origins
@@ -15,6 +15,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_routes.router)
+app.include_router(model_routes.router)
 
 if __name__ == "__main__":
     import uvicorn
