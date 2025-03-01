@@ -1,12 +1,34 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from app.models.message import Message, MessageResponse
+from app.models.request_models import QueryRequest
+from app.models.response_models import ChatResponse
 from app.controllers.chat_controller import ChatController
+from app.controllers.model_controller import ModelController
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+model_controller = ModelController()
 
-@router.post("/message", response_model=MessageResponse)
+@router.post("/", response_model=MessageResponse)
 async def send_message(message: Message):
-    return await ChatController.process_message(message)
+    try:
+        # Add your chat logic here
+        response = MessageResponse(
+            content=f"Received your message: {message.content}"
+        )
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate", response_model=ChatResponse)
+async def generate_chat_response(request: QueryRequest):
+    """Generate a chat response using the specified model"""
+    try:
+        result = await model_controller.generate_response(request)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+        return ChatResponse(response=result["response"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health")
 async def health_check():
