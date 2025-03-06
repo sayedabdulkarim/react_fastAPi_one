@@ -1,24 +1,8 @@
 import httpx
 from fastapi import HTTPException
 import os
-from typing import List, Dict, Optional
-from pydantic import BaseModel
-
-class ModelDetails(BaseModel):
-    parent_model: str
-    format: str
-    family: str
-    families: List[str]
-    parameter_size: str
-    quantization_level: str
-
-class ModelInfo(BaseModel):
-    name: str
-    model: str
-    modified_at: str
-    size: int
-    digest: str
-    details: ModelDetails
+from typing import List
+from ..models.model_schemas import ModelInfo
 
 class ModelController:
     @staticmethod
