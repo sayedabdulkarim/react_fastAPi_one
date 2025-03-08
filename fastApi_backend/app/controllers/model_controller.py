@@ -28,6 +28,8 @@ class ModelController:
                     "stream": False  # Ensure we get a complete response
                 }
                 
+                print(f"Sending request to Ollama API: {payload}", flush=True)
+                
                 response = await client.post(
                     f"{os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')}/api/generate",
                     json=payload,
@@ -37,6 +39,7 @@ class ModelController:
                 if response.status_code == 200:
                     try:
                         response_data = response.json()
+                        print(f"Received response from Ollama API: {response_data}", flush=True)
                         return {
                             "response": response_data.get('response', ''),
                             "model": model

@@ -1,0 +1,34 @@
+# Get list of available models
+curl -X GET "http://localhost:8000/api/models" -H "accept: application/json"
+
+# Start a new chat thread
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "What is machine learning?",
+    "model": "llama2",
+    "user_id": "user123"
+  }'
+
+  # Add a message to an existing thread
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "thread_id": "THREAD_ID",
+    "message": "Can you provide some examples of machine learning applications?",
+    "model": "llama2",
+    "user_id": "user123"
+  }'
+
+  # Get all chat threads
+curl -X GET "http://localhost:8000/api/chat/threads" -H "accept: application/json"
+
+# Get chat threads for a specific user with limit
+curl -X GET "http://localhost:8000/api/chat/threads?user_id=user123&limit=10" -H "accept: application/json"
+
+
+# Get a specific chat thread by ID
+curl -X GET "http://localhost:8000/api/chat/thread/THREAD_ID" -H "accept: application/json"
+
+# Delete a specific chat thread
+curl -X DELETE "http://localhost:8000/api/chat/thread/THREAD_ID" -H "accept: application/json"
