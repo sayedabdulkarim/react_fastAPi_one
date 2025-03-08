@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Query, Request, Body
+from typing import List, Optional, Dict, Any
 
 from ..controllers.chat_controller import ChatController
 from ..models.chat_schemas import ChatThread, ChatRequest, ChatResponse, Message
@@ -7,28 +7,50 @@ from ..models.chat_schemas import ChatThread, ChatRequest, ChatResponse, Message
 router = APIRouter()
 
 @router.post("/chat", response_model=ChatThread)
-async def chat(request: ChatRequest):
+async def chat(request_data: Dict[Any, Any] = Body(...)):
     """
     Process a chat message. Creates a new thread if thread_id is not provided.
     Returns the updated or created chat thread.
+    
+    This endpoint accepts either a ChatRequest model or a raw JSON with "message" or "prompt" fields.
     """
     try:
-        if request.thread_id:
+        # Check if we have a thread_id
+        thread_id = request_data.get("thread_id")
+        
+        # Check if we need to map "prompt" to "message" (for compatibility)
+        message = request_data.get("message") or request_data.get("prompt")
+        if not message:
+            raise HTTPException(status_code=422, 
+                               detail="Either 'message' or 'prompt' field is required")
+        
+        # Get other fields
+        model = request_data.get("model")
+        if not model:
+            raise HTTPException(status_code=422, detail="'model' field is required")
+        
+        user_id = request_data.get("user_id")
+        
+        # Process the request
+        if thread_id:
             # Continue an existing thread
             thread = await ChatController.add_message_to_thread(
-                thread_id=request.thread_id,
-                message=request.message,
-                model=request.model
+                thread_id=thread_id,
+                message=message,
+                model=model
             )
         else:
             # Create a new thread
             thread = await ChatController.create_thread(
-                message=request.message,
-                model=request.model,
-                user_id=request.user_id
+                message=message,
+                model=model,
+                user_id=user_id
             )
         
         return thread
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
