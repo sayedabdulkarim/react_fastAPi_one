@@ -6,6 +6,7 @@ import os
 from app.utils.mongodb import MongoDB
 from app.routes.model_routes import router as model_router
 from app.routes.chat_routes import router as chat_router
+from app.routes.debug_routes import router as debug_router
 
 # Load environment variables
 load_dotenv()
@@ -24,6 +25,7 @@ app.add_middleware(
 # Include routers
 app.include_router(model_router, prefix="/api", tags=["models"])
 app.include_router(chat_router, prefix="/api", tags=["chat"])
+app.include_router(debug_router, prefix="/api", tags=["debug"])
 
 @app.on_event("startup")
 async def startup_event():

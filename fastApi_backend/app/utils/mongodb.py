@@ -1,8 +1,13 @@
 import motor.motor_asyncio
-from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.errors import ServerSelectionTimeoutError, ConnectionFailure  # Fixed import
 from fastapi import HTTPException
 import os
 from dotenv import load_dotenv
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -19,9 +24,10 @@ class MongoDB:
             db_name = os.getenv("MONGODB_DB_NAME", "llm_chat_db")
             
             if not mongo_uri:
+                logger.error("MONGO_URI environment variable is not set")
                 raise ValueError("MONGO_URI environment variable is not set")
                 
-            print(f"Connecting to MongoDB at {mongo_uri}", flush=True)
+            logger.info(f"Connecting to MongoDB at {mongo_uri.split('@')[0]}@****")
             cls.client = motor.motor_asyncio.AsyncIOMotorClient(
                 mongo_uri,
                 serverSelectionTimeoutMS=5000
@@ -31,14 +37,29 @@ class MongoDB:
             await cls.client.server_info()
             
             cls.db = cls.client[db_name]
-            print(f"Connected to MongoDB database: {db_name}", flush=True)
+            logger.info(f"Connected to MongoDB database: {db_name}")
             
-        except ServerSelectionTimeoutError:
+            # Verify we can write to the database with a test collection
+            test_collection = cls.db.connection_test
+            result = await test_collection.insert_one({"test": "connection", "timestamp": "now"})
+            if result.inserted_id:
+                logger.info(f"Successfully wrote test document with ID: {result.inserted_id}")
+                await test_collection.delete_one({"_id": result.inserted_id})
+            
+        except ServerSelectionTimeoutError as e:
+            logger.error(f"MongoDB server selection timeout: {str(e)}")
             raise HTTPException(
                 status_code=500,
                 detail="Failed to connect to MongoDB. Please check your connection string and network."
             )
+        except ConnectionFailure as e:  # Changed from ConnectionError to ConnectionFailure
+            logger.error(f"MongoDB connection error: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"MongoDB connection error: {str(e)}"
+            )
         except Exception as e:
+            logger.error(f"Unexpected MongoDB error: {str(e)}")
             raise HTTPException(
                 status_code=500, 
                 detail=f"MongoDB connection error: {str(e)}"
@@ -49,12 +70,13 @@ class MongoDB:
         """Close MongoDB connection"""
         if cls.client:
             cls.client.close()
-            print("MongoDB connection closed", flush=True)
+            logger.info("MongoDB connection closed")
 
     @classmethod
     async def get_collection(cls, collection_name):
         """Get a collection from the database"""
         if not cls.db:
+            logger.info("Database connection not initialized, connecting now...")
             await cls.connect_to_mongo()
         return cls.db[collection_name]
 

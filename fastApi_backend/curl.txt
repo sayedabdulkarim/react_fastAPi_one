@@ -6,7 +6,7 @@ curl -X POST "http://localhost:8000/api/chat" \
   -H "Content-Type: application/json" \
   -H "accept: application/json" \
   -d '{
-    "message": "What is machine learning?",
+    "message": "hi",
     "model": "llama2",
     "user_id": "user123"
   }'
@@ -16,7 +16,7 @@ curl -X POST "http://localhost:8000/api/chat" \
   -H "Content-Type: application/json" \
   -H "accept: application/json" \
   -d '{
-    "prompt": "What is machine learning?",
+    "prompt": "hi",
     "model": "llama3.2:1b",
     "user_id": "user123"
   }'
