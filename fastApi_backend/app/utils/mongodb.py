@@ -75,7 +75,8 @@ class MongoDB:
     @classmethod
     async def get_collection(cls, collection_name):
         """Get a collection from the database"""
-        if not cls.db:
+        # Fix: Check if cls.db is None instead of using 'not cls.db'
+        if cls.db is None:
             logger.info("Database connection not initialized, connecting now...")
             await cls.connect_to_mongo()
         return cls.db[collection_name]
